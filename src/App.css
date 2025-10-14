@@ -19,9 +19,7 @@ body {
   min-height: 100vh;
 }
 
-/* ========================================
-   HEADER
-======================================== */
+/** ==== HEADER ====  */
 .header {
   background: white;
   padding: 24px 32px;
@@ -131,9 +129,8 @@ body {
   transform: translateY(1px);
 }
 
-/* ========================================
-   UNDO TOAST
-======================================== */
+
+/** ==== UNDO TOAST ====  */
 .undo-toast {
   position: fixed;
   bottom: 30px;
@@ -176,9 +173,8 @@ body {
   color: #a5b4fc;
 }
 
-/* ========================================
-   SUMMARY CARDS
-======================================== */
+
+/** ==== SUMMARY CARDS ====   */
 .summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -226,9 +222,8 @@ body {
   color: #1a202c;
 }
 
-/* ========================================
-   CHART SECTION
-======================================== */
+
+/** ==== CHART SECTION ====  */
 .chart-section {
   background: white;
   padding: 28px;
@@ -288,7 +283,6 @@ body {
 .btn-delete .bi {
   font-size: 18px;
   vertical-align: middle;
-  margin-right: 6px;
 }
 
 .empty-icon .bi {
@@ -296,9 +290,7 @@ body {
   opacity: 0.4;
 }
 
-/* ========================================
-   FILTER SECTION
-======================================== */
+/** ==== FILTER SECTION ====  */
 .filter-section {
   background: white;
   padding: 20px 24px;
@@ -407,9 +399,7 @@ body {
   background: #fecaca;
 }
 
-/* ========================================
-   MODAL
-======================================== */
+/** ==== MODAL ====  */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -567,9 +557,8 @@ body {
   transform: translateY(1px);
 }
 
-/* ========================================
-   TRANSACTIONS LIST
-======================================== */
+
+/** ==== TRANSACTIONS LIST ====  */
 .transactions {
   background: white;
   padding: 28px;
@@ -789,9 +778,7 @@ body {
 }
 
 
-/* ========================================
-   RESPONSIVE
-======================================== */
+/** ==== RESPONSIVE ====  */
 @media (max-width: 768px) {
   .app {
     padding: 12px;
@@ -844,6 +831,7 @@ body {
     width: 100%;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 
   .btn-export, .btn-add {
@@ -855,7 +843,9 @@ body {
     text-overflow: ellipsis;
   }
 
-  .btn-add {
+  .btn-add, .btn-export[style*="cursor: pointer"] {
+    text-align: center;
+    /* font-weight: 500; */
     grid-column: span 2;
   }
 
@@ -1049,6 +1039,7 @@ body {
   .btn-edit, .btn-delete {
     padding: 6px 12px;
     font-size: 14px;
+    
   }
 
 
