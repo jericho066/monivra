@@ -1009,7 +1009,7 @@ body {
 
   .transaction-details {
     flex: 1;
-    min-width: calc(100% -60%);
+    min-width: calc(100% - 60%);
   }
 
   .transaction-category {
