@@ -34,9 +34,8 @@ body {
 }
 
 .header-left img {
-  height: 42px;
+  height: 44px;
   width: auto;
-  margin-right: 10px;
   vertical-align: middle;
   display: inline-block;
 }
@@ -44,11 +43,12 @@ body {
 .header-left h1 {
   display: flex;
   align-items:  center;
+  justify-content: center;
   gap:  10px;
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: #1a202c;
-  margin: 0;
+  margin-bottom: 10px;
 }
 
 .month-nav {
@@ -801,8 +801,9 @@ body {
 
   .header-left h1 {
     font-size: 20px;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 5px;
+    margin-bottom: 20px;
+    margin-top: 10px;
   }
 
   .header-left img {
@@ -1074,7 +1075,7 @@ body {
 
 @media (max-width: 400px) {
   .header-left h1 {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .header-left img {
