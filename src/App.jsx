@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logoImage from './assets/logo.png';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import "./App.css"
 
@@ -425,7 +426,7 @@ function App() {
       {/* Header */}
       <header className="header">
         <div className="header-left" style={{marginRight: 8}}>
-          <h1> <img src="/logo.png" alt="" /> Monivera</h1>
+          <h1> <img src={logoImage} alt="" /> Monivera</h1>
           <div className="month-nav">
             <button onClick={() => changeMonth(-1)} className="month-btn">
               ◀
