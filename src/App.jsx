@@ -33,7 +33,7 @@ const sampleNotes = [
   "Utilities bill", "Cinema night", "Coffee", "Clothes", "Freelance payment"
 ];
 
-const generateSampleTransactions = (categories, months = 6) => {
+const generateDemoData = (categories, months = 6) => {
   const today = new Date();
   const results = [];
 
@@ -129,7 +129,7 @@ function App() {
 
 
   // Handle form input changes
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -139,7 +139,7 @@ function App() {
 
 
   //* return the first category id appropriate for a type
-  const getFirstCategoryIdForType = (type, categories) => {
+  const getDefaultCategory = (type, categories) => {
     if (!categories || categories.length === 0) return '1';
     if (type === 'income') {
       const incomeCats = categories.filter(c => /salary|income/i.test(c.name));
@@ -156,7 +156,7 @@ function App() {
     setFormData({
       amount: "",
       type: "expense",
-      categoryId: getFirstCategoryIdForType("salary", categories),
+      categoryId: getDefaultCategory("salary", categories),
       date: new Date().toISOString().split("T")[0],
       note: ""
     });
@@ -239,7 +239,7 @@ function App() {
   }
 
 
-  const exportToCSV = () => {
+  const exportCSV = () => {
     const monthTransactions = transactions.filter(t => {
       const transactionDate = new Date(t.date);
       return (
@@ -280,7 +280,7 @@ function App() {
   };
 
 
-  const importFromJSON = (event) => {
+  const importJSON = (event) => {
     const file = event.target.files[0];
     if(!file) return;
 
@@ -310,7 +310,7 @@ function App() {
 
   }
 
-  const exportToJSON = () => {
+  const exportJSON = () => {
     const data = {
       transactions: transactions,
       categories: categories,
@@ -451,7 +451,7 @@ function App() {
           {/* <button
             className="btn-export"
             onClick={() => {
-              const samples = generateSampleTransactions(categories, 6);
+              const samples = generateDemoData(categories, 6);
               setTransactions(samples);
               saveData('transactions', samples);
             }}
@@ -465,11 +465,11 @@ function App() {
           </button> */}
 
 
-          <button className="btn-export" onClick={exportToCSV} title="Export CSV">
+          <button className="btn-export" onClick={exportCSV} title="Export CSV">
             <i className="bi bi-download"></i> CSV
           </button>
 
-           <button className="btn-export" onClick={exportToJSON} title="Export JSON">
+           <button className="btn-export" onClick={exportJSON} title="Export JSON">
             <i class="bi bi-floppy"></i> Backup
           </button>
 
@@ -478,7 +478,7 @@ function App() {
             <input 
               type="file" 
               accept=".json" 
-              onChange={importFromJSON}
+              onChange={importJSON}
               style={{ display: 'none' }}
             />
           </label>
@@ -682,14 +682,14 @@ function App() {
                   <button
                     type="button"
                     className={`type-button ${formData.type === 'expense' ? 'active' : ''}`}
-                    onClick={() => setFormData(prev => ({ ...prev, type: 'expense', categoryId: getFirstCategoryIdForType('expense', categories) }))}
+                    onClick={() => setFormData(prev => ({ ...prev, type: 'expense', categoryId: getDefaultCategory('expense', categories) }))}
                   >
                     Expense
                   </button>
                   <button
                     type="button"
                     className={`type-button ${formData.type === 'income' ? 'active' : ''}`}
-                    onClick={() => setFormData(prev => ({ ...prev, type: 'income', categoryId: getFirstCategoryIdForType('income', categories) }))}
+                    onClick={() => setFormData(prev => ({ ...prev, type: 'income', categoryId: getDefaultCategory('income', categories) }))}
                   >
                     Income
                   </button>
@@ -702,7 +702,7 @@ function App() {
                   type="number"
                   name="amount"
                   value={formData.amount}
-                  onChange={handleInputChange}
+                  onChange={handleChange}
                   placeholder="0.00"
                   step="0.01"
                   className="input"
@@ -715,7 +715,7 @@ function App() {
                 <select
                   name="categoryId"
                   value={formData.categoryId}
-                  onChange={handleInputChange}
+                  onChange={handleChange}
                   className="select"
                 >
                   {categories
@@ -739,7 +739,7 @@ function App() {
                   type="date"
                   name="date"
                   value={formData.date}
-                  onChange={handleInputChange}
+                  onChange={handleChange}
                   className="input"
                 />
               </div>
@@ -750,7 +750,7 @@ function App() {
                   type="text"
                   name="note"
                   value={formData.note}
-                  onChange={handleInputChange}
+                  onChange={handleChange}
                   placeholder="e.g., Lunch at restaurant"
                   className="input"
                 />
