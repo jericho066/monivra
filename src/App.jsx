@@ -426,7 +426,7 @@ function App() {
       {/* Header */}
       <header className="header">
         <div className="header-left" style={{marginRight: 8}}>
-          <h1> <img src={logoImage} alt="" /> Monivera</h1>
+          <h1> <img src={logoImage} alt="" /> Monivra</h1>
           <div className="month-nav">
             <button onClick={() => changeMonth(-1)} className="month-btn">
               ◀

@@ -1,4 +1,4 @@
-# Monivera - Personal Expense Tracker
+# Monivra - Personal Expense Tracker
 
 A modern, intuitive expense tracking application built with React. Track your income and expenses, visualize spending patterns, and manage your finances with ease.
 
