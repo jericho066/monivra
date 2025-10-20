@@ -46,8 +46,8 @@ Easily add new income or expense entries with categorized options, notes, and da
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/jericho066/monivera.git
-cd monivera
+git clone https://github.com/jericho066/monivra.git
+cd monivra
 ```
 
 ### 2. Install dependencies
