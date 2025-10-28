@@ -20,7 +20,7 @@ Easily add new income or expense entries with categorized options, notes, and da
 
 
 ### Live Demo
-[View Demo](https://jericho066.github.io/monivra/)
+[View Live Demo](https://jericho066.github.io/monivra/)
 
 
 ## Features
