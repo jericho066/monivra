@@ -75,7 +75,7 @@ const MonthlyTrendChart = ({ monthlyTrendData }) => (
             fontSize: '13px',
           }}
         />
-        <Bar dataKey="income"   fill="#10b981" radius={[8, 8, 0, 0]} />
+        <Bar dataKey="income" fill="#10b981" radius={[8, 8, 0, 0]} />
         <Bar dataKey="expenses" fill="#ef4444" radius={[8, 8, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
