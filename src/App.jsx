@@ -127,10 +127,7 @@ function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.amount || formData.amount <= 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
+    
     if (editingTransaction) {
       setTransactions(prev =>
         prev.map(t =>
