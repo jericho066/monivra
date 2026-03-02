@@ -4,13 +4,14 @@ import './App.css';
 import { DEFAULT_CATEGORIES } from './constants/categories';
 import { getStoredData, saveData, getDefaultCategory, getMonthlyTrend, triggerDownload } from './utils/helpers';
 
-import Header          from './components/Header';
-import UndoToast       from './components/UndoToast';
-import SummaryCards    from './components/SummaryCards';
-import ChartSection    from './components/ChartSection';
-import FilterSection   from './components/FilterSection';
+import Header from './components/Header';
+import UndoToast from './components/UndoToast';
+import SummaryCards from './components/SummaryCards';
+import ChartSection from './components/ChartSection';
+import FilterSection from './components/FilterSection';
 import TransactionList from './components/TransactionList';
 import TransactionForm from './components/TransactionForm';
+import BudgetGoals from './components/BudgetGoals';
 
 const blankForm = (categories, type = 'expense') => ({
   amount: '',
@@ -21,16 +22,17 @@ const blankForm = (categories, type = 'expense') => ({
 });
 
 function App() {
-  const [transactions, setTransactions]       = useState(() => getStoredData('transactions', []));
-  const [categories]                          = useState(DEFAULT_CATEGORIES);
-  const [currentDate, setCurrentDate]         = useState(new Date());
-  const [showForm, setShowForm]               = useState(false);
+  const [transactions, setTransactions] = useState(() => getStoredData('transactions', []));
+  const [categories] = useState(DEFAULT_CATEGORIES);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [formData, setFormData]               = useState(() => blankForm(DEFAULT_CATEGORIES));
+  const [formData, setFormData] = useState(() => blankForm(DEFAULT_CATEGORIES));
   const [undoTransaction, setUndoTransaction] = useState(null);
-  const [searchQuery, setSearchQuery]         = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedType, setSelectedType]       = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
+  const [budgets, setBudgets] = useState(() => getStoredData('budgets', {}));
 
   useEffect(() => {
     saveData('transactions', transactions);
@@ -41,6 +43,12 @@ function App() {
     const timer = setTimeout(() => setUndoTransaction(null), 5000);
     return () => clearTimeout(timer);
   }, [undoTransaction]);
+
+  useEffect(() => {
+    saveData('budgets', budgets);
+  }, [budgets]);
+
+
 
   const getCategoryInfo = (categoryId) =>
     categories.find(c => c.id === categoryId) ||
@@ -81,6 +89,7 @@ function App() {
     return result;
   }, [filteredTransactions]);
 
+
   const categoryData = useMemo(() => {
     return categories
       .map(cat => ({
@@ -96,6 +105,15 @@ function App() {
   }, [filteredTransactions, categories]);
 
   const monthlyTrendData = useMemo(() => getMonthlyTrend(transactions), [transactions]);
+
+  const spentByCategory = useMemo(() => {
+    return categories.reduce((acc, cat) => {
+      acc[cat.id] = filteredTransactions
+        .filter(t => t.categoryId === cat.id && t.type === 'expense')
+        .reduce((s, t) => s + t.amount, 0);
+      return acc;
+    }, {});
+  }, [filteredTransactions, categories]);
 
   const hasActiveFilters = searchQuery || selectedCategory !== 'all' || selectedType !== 'all';
 
@@ -169,6 +187,21 @@ function App() {
     setSelectedType('all');
   };
 
+
+  const handleSaveBudget = (categoryId, amount) => {
+    setBudgets(prev => ({ ...prev, [categoryId]: amount }));
+  };
+
+  const handleRemoveBudget = (categoryId) => {
+    setBudgets(prev => {
+      const updated = { ...prev };
+      delete updated[categoryId];
+      return updated;
+    });
+  };
+
+
+
   const exportCSV = () => {
     const monthTx = transactions.filter(t => {
       const d = new Date(t.date);
@@ -196,28 +229,139 @@ function App() {
     );
   };
 
+
+
   const importJSON = (event) => {
     const file = event.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        if (data.transactions && Array.isArray(data.transactions)) {
-          const confirmed = window.confirm(
-            `Import ${data.transactions.length} transactions? This will merge with your existing ${transactions.length} transactions.`
-          );
-          if (confirmed) {
-            setTransactions(prev => [...data.transactions, ...prev]);
-            alert('Data imported successfully!');
-          }
-        } else {
-          alert('Invalid file format');
+
+        //! Step 1: Basic structure check
+        if (!data.transactions || !Array.isArray(data.transactions)) {
+          alert('Invalid file format. Please use a Monivra backup file.');
+          return;
         }
-      } catch { alert('Error reading file'); }
+
+        //! Step 2: Validate each transaction
+        const requiredFields = ['id', 'amount', 'type', 'categoryId', 'date'];
+        const validTypes = ['income', 'expense'];
+        const validCategoryIds = categories.map(c => c.id);
+
+        const invalidItems = [];
+        const validItems = [];
+
+        data.transactions.forEach((t, index) => {
+          const problems = [];
+
+          // Check required fields exist
+          requiredFields.forEach(field => {
+            if (t[field] === undefined || t[field] === null || t[field] === '') {
+              problems.push(`missing "${field}"`);
+            }
+          });
+
+          // Check amount is a positive number
+          if (t.amount !== undefined) {
+            const amt = parseFloat(t.amount);
+            if (isNaN(amt) || amt <= 0) {
+              problems.push('invalid amount');
+            }
+          }
+
+          // Check type is valid
+          if (t.type && !validTypes.includes(t.type)) {
+            problems.push(`unknown type "${t.type}"`);
+          }
+
+          // Check date is a real date
+          if (t.date) {
+            const parsed = new Date(t.date);
+            if (isNaN(parsed.getTime())) {
+              problems.push('invalid date');
+            }
+          }
+
+          // Check categoryId exists in our categories
+          if (t.categoryId && !validCategoryIds.includes(t.categoryId)) {
+            problems.push(`unknown category "${t.categoryId}"`);
+          }
+
+          if (problems.length > 0) {
+            invalidItems.push({ index: index + 1, problems });
+          } else {
+            validItems.push(t);
+          }
+
+        });
+
+        //! Step 3: Duplicate detection
+        const existingIds = new Set(transactions.map(t => t.id));
+        const duplicates  = validItems.filter(t => existingIds.has(t.id));
+        const newItems    = validItems.filter(t => !existingIds.has(t.id));
+        
+
+        //! Step 4: Build a clear summary for the user
+        const lines = [];
+        lines.push(`📂 File: ${file.name}`);
+        lines.push(`📋 Total transactions in file: ${data.transactions.length}`);
+        lines.push('');
+
+        if (invalidItems.length > 0) {
+          lines.push(`⚠️  Skipped (invalid data): ${invalidItems.length}`);
+          // Show details for up to 3 invalid items so we don't flood them
+          invalidItems.slice(0, 3).forEach(({ index, problems }) => {
+            lines.push(`   • Row ${index}: ${problems.join(', ')}`);
+          });
+          if (invalidItems.length > 3) {
+            lines.push(`   • ...and ${invalidItems.length - 3} more`);
+          }
+          lines.push('');
+        }
+
+        if (duplicates.length > 0) {
+          lines.push(`🔁 Duplicates (already exist, will skip): ${duplicates.length}`);
+          lines.push('');
+        }
+
+        lines.push(`✅ New transactions to import: ${newItems.length}`);
+
+        //! Step 5: Stop if there's nothing to import
+        if (newItems.length === 0) {
+          alert(
+            lines.join('\n') +
+            '\n\nNothing new to import. Your data is already up to date.'
+          );
+          // Reset file input so the same file can be re-selected if needed
+          event.target.value = '';
+          return;
+        }
+
+        //! Step 6: Confirm and import
+        lines.push('');
+        lines.push('Proceed with import?');
+
+        const confirmed = window.confirm(lines.join('\n'));
+        if (confirmed) {
+          setTransactions(prev => [...newItems, ...prev]);
+          alert(`✅ Successfully imported ${newItems.length} new transaction${newItems.length !== 1 ? 's' : ''}.`);
+        }
+
+      } catch (err) {
+        alert('Could not read the file. Make sure it is a valid Monivra JSON backup.');
+      }
+
+      // Always reset file input after processing
+      event.target.value = '';
     };
+
     reader.readAsText(file);
   };
+
+
 
   return (
     <div className="app">
@@ -233,6 +377,14 @@ function App() {
       {undoTransaction && <UndoToast onUndo={handleUndo} />}
 
       <SummaryCards summary={summary} />
+
+      <BudgetGoals
+        categories={categories}
+        budgets={budgets}
+        spentByCategory={spentByCategory}
+        onSave={handleSaveBudget}
+        onRemove={handleRemoveBudget}
+      />
 
       <ChartSection
         categoryData={categoryData}
