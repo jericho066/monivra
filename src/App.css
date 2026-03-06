@@ -1359,5 +1359,176 @@ body {
 
 
 
+/* ══════════════════════════════════════════════════════════════
+   RECURRING TRANSACTIONS
+══════════════════════════════════════════════════════════════ */
+
+/* ── Recurring toggle button in form ────────────────────────── */
+.recurring-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: left;
+  font-family: inherit;
+}
+
+.recurring-toggle:hover {
+  border-color: var(--brand);
+  background: var(--brand-faint);
+}
+
+.recurring-toggle.active {
+  border-color: var(--brand);
+  background: var(--brand-faint);
+}
+
+.recurring-toggle__icon {
+  font-size: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color var(--transition);
+}
+
+.recurring-toggle.active .recurring-toggle__icon {
+  color: var(--brand);
+}
+
+.recurring-toggle__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recurring-toggle__text strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.recurring-toggle__text span {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.recurring-toggle__badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.recurring-toggle__badge.off {
+  background: var(--border);
+  color: var(--text-muted);
+}
+
+.recurring-toggle__badge.on {
+  background: var(--brand);
+  color: white;
+}
+
+/* ── Recurring list section ─────────────────────────────────── */
+.recurring-section {
+  background: var(--surface);
+  padding: 24px 28px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.recurring-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.recurring-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand);
+  background: var(--brand-faint);
+  border: 1px solid var(--brand-light);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.recurring-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Reuse transaction-item layout */
+.recurring-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+  margin: 0 -4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  border-radius: 6px;
+}
+
+.recurring-item:last-child { border-bottom: none; }
+.recurring-item:hover { background: var(--brand-faint); }
+
+.recurring-item--paused {
+  opacity: 0.6;
+}
+
+.recurring-paused-badge {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--border);
+  color: var(--text-muted);
+  padding: 2px 7px;
+  border-radius: 20px;
+  vertical-align: middle;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .recurring-section { padding: 18px 16px; }
+
+  .recurring-item {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .recurring-item .transaction-right {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+}
+
+
+
+
+
+
+
 
 

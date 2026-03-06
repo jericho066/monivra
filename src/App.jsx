@@ -12,6 +12,8 @@ import FilterSection from './components/FilterSection';
 import TransactionList from './components/TransactionList';
 import TransactionForm from './components/TransactionForm';
 import BudgetGoals from './components/BudgetGoals';
+import RecurringList from './components/RecurringList';
+import { applyRecurringTransactions } from './utils/helpers';
 
 const blankForm = (categories, type = 'expense') => ({
   amount: '',
@@ -19,6 +21,7 @@ const blankForm = (categories, type = 'expense') => ({
   categoryId: getDefaultCategory(type, categories),
   date: new Date().toISOString().split('T')[0],
   note: '',
+  recurring: false,
 });
 
 function App() {
@@ -33,10 +36,17 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [budgets, setBudgets] = useState(() => getStoredData('budgets', {}));
+  const [recurringTemplates, setRecurringTemplates] = useState(
+    () => getStoredData('recurringTemplates', [])
+  );
 
   useEffect(() => {
     saveData('transactions', transactions);
   }, [transactions]);
+
+  useEffect(() => {
+    saveData('recurringTemplates', recurringTemplates);
+  }, [recurringTemplates]);
 
   useEffect(() => {
     if (!undoTransaction) return;
@@ -48,6 +58,19 @@ function App() {
     saveData('budgets', budgets);
   }, [budgets]);
 
+
+  useEffect(() => {
+    if (recurringTemplates.length === 0) return;
+    const { newTransactions, updatedTemplates } = applyRecurringTransactions(
+      recurringTemplates,
+      transactions
+    );
+    if (newTransactions.length > 0) {
+      setTransactions(prev => [...newTransactions, ...prev]);
+      setRecurringTemplates(updatedTemplates);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const getCategoryInfo = (categoryId) =>
@@ -145,7 +168,17 @@ function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
+    const newTransaction = {
+      id: crypto.randomUUID(),
+      amount: parseFloat(formData.amount),
+      type: formData.type,
+      categoryId: formData.categoryId,
+      date: formData.date,
+      note: formData.note,
+      createdAt: new Date().toISOString(),
+    };
+
     if (editingTransaction) {
       setTransactions(prev =>
         prev.map(t =>
@@ -155,16 +188,26 @@ function App() {
         )
       );
     } else {
-      setTransactions(prev => [{
-        id:         crypto.randomUUID(),
-        amount:     parseFloat(formData.amount),
-        type:       formData.type,
-        categoryId: formData.categoryId,
-        date:       formData.date,
-        note:       formData.note,
-        createdAt:  new Date().toISOString(),
-      }, ...prev]);
+      setTransactions(prev => [newTransaction, ...prev]);
+
+      // If recurring is checked, save a template too
+      if (formData.recurring) {
+        const template = {
+          id: crypto.randomUUID(),
+          amount: parseFloat(formData.amount),
+          type: formData.type,
+          categoryId: formData.categoryId,
+          note: formData.note,
+          startDate: formData.date,
+          dayOfMonth: new Date(formData.date).getDate(),
+          active: true,
+          lastGeneratedDate: formData.date,
+          createdAt: new Date().toISOString(),
+        };
+        setRecurringTemplates(prev => [...prev, template]);
+      }
     }
+
     setShowForm(false);
     setEditingTransaction(null);
   };
@@ -198,6 +241,25 @@ function App() {
       delete updated[categoryId];
       return updated;
     });
+  };
+
+
+  const handlePauseRecurring = (id) => {
+    setRecurringTemplates(prev =>
+      prev.map(t => t.id === id ? { ...t, active: false } : t)
+    );
+  };
+
+  const handleResumeRecurring = (id) => {
+    setRecurringTemplates(prev =>
+      prev.map(t => t.id === id ? { ...t, active: true } : t)
+    );
+  };
+
+  const handleRemoveRecurring = (id) => {
+    if (window.confirm('Remove this recurring transaction? Past transactions it generated will not be deleted.')) {
+      setRecurringTemplates(prev => prev.filter(t => t.id !== id));
+    }
   };
 
 
@@ -384,6 +446,14 @@ function App() {
         spentByCategory={spentByCategory}
         onSave={handleSaveBudget}
         onRemove={handleRemoveBudget}
+      />
+
+      <RecurringList
+        templates={recurringTemplates}
+        categories={categories}
+        onPause={handlePauseRecurring}
+        onResume={handleResumeRecurring}
+        onRemove={handleRemoveRecurring}
       />
 
       <ChartSection

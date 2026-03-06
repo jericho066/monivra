@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { getDefaultCategory } from '../utils/helpers';
 
-const TransactionForm = ({ formData, setFormData, editingTransaction, onSubmit, onClose, categories }) => {
+const TransactionForm = ({
+  formData,
+  setFormData,
+  editingTransaction,
+  onSubmit,
+  onClose,
+  categories,
+}) => {
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-
-    // Clear the error for this field as soon as the user starts fixing it
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleTypeChange = (type) => {
@@ -20,6 +23,10 @@ const TransactionForm = ({ formData, setFormData, editingTransaction, onSubmit, 
       type,
       categoryId: getDefaultCategory(type, categories),
     }));
+  };
+
+  const handleRecurringToggle = () => {
+    setFormData(prev => ({ ...prev, recurring: !prev.recurring }));
   };
 
   const validate = () => {
@@ -54,15 +61,11 @@ const TransactionForm = ({ formData, setFormData, editingTransaction, onSubmit, 
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = validate();
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      // Focus the first field with an error
-      const firstErrorField = Object.keys(newErrors)[0];
-      document.querySelector(`[name="${firstErrorField}"]`)?.focus();
+      document.querySelector(`[name="${Object.keys(newErrors)[0]}"]`)?.focus();
       return;
     }
-
     onSubmit(e);
   };
 
@@ -72,6 +75,8 @@ const TransactionForm = ({ formData, setFormData, editingTransaction, onSubmit, 
       : !/salary|income/i.test(c.name)
   );
 
+  const selectedDay = formData.date ? new Date(formData.date).getDate() : null;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -79,112 +84,69 @@ const TransactionForm = ({ formData, setFormData, editingTransaction, onSubmit, 
 
         <form onSubmit={handleSubmit} noValidate>
 
-          {/* Type toggle */}
           <div className="form-group">
             <label className="label">Type</label>
             <div className="type-toggle">
-              <button
-                type="button"
-                className={`type-button ${formData.type === 'expense' ? 'active' : ''}`}
-                onClick={() => handleTypeChange('expense')}
-              >
-                Expense
-              </button>
-              <button
-                type="button"
-                className={`type-button ${formData.type === 'income' ? 'active' : ''}`}
-                onClick={() => handleTypeChange('income')}
-              >
-                Income
-              </button>
+              <button type="button" className={`type-button ${formData.type === 'expense' ? 'active' : ''}`} onClick={() => handleTypeChange('expense')}>Expense</button>
+              <button type="button" className={`type-button ${formData.type === 'income' ? 'active' : ''}`} onClick={() => handleTypeChange('income')}>Income</button>
             </div>
           </div>
 
-          {/* Amount */}
           <div className="form-group">
             <label className="label">Amount (₱)</label>
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              placeholder="0.00"
-              step="0.01"
-              className={`input ${errors.amount ? 'input-error' : ''}`}
-              autoFocus
-            />
-            {errors.amount && (
-              <span className="field-error">
-                <i className="bi bi-exclamation-circle"></i> {errors.amount}
-              </span>
-            )}
+            <input type="number" name="amount" value={formData.amount} onChange={handleChange} placeholder="0.00" step="0.01" className={`input ${errors.amount ? 'input-error' : ''}`} autoFocus />
+            {errors.amount && <span className="field-error"><i className="bi bi-exclamation-circle"></i> {errors.amount}</span>}
           </div>
 
-          {/* Category */}
           <div className="form-group">
             <label className="label">Category</label>
-            <select
-              name="categoryId"
-              value={formData.categoryId}
-              onChange={handleChange}
-              className="select"
-            >
-              {filteredCategories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
+            <select name="categoryId" value={formData.categoryId} onChange={handleChange} className="select">
+              {filteredCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
             </select>
           </div>
 
-          {/* Date */}
           <div className="form-group">
             <label className="label">Date</label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              className={`input ${errors.date ? 'input-error' : ''}`}
-            />
-            {errors.date && (
-              <span className="field-error">
-                <i className="bi bi-exclamation-circle"></i> {errors.date}
-              </span>
-            )}
+            <input type="date" name="date" value={formData.date} onChange={handleChange} className={`input ${errors.date ? 'input-error' : ''}`} />
+            {errors.date && <span className="field-error"><i className="bi bi-exclamation-circle"></i> {errors.date}</span>}
           </div>
 
-          {/* Note */}
           <div className="form-group">
             <label className="label">
               Note (optional)
               {formData.note?.length > 80 && (
-                <span className={`char-count ${formData.note.length > 100 ? 'over' : ''}`}>
-                  {formData.note.length}/100
-                </span>
+                <span className={`char-count ${formData.note.length > 100 ? 'over' : ''}`}>{formData.note.length}/100</span>
               )}
             </label>
-            <input
-              type="text"
-              name="note"
-              value={formData.note}
-              onChange={handleChange}
-              placeholder="e.g., Lunch at restaurant"
-              className={`input ${errors.note ? 'input-error' : ''}`}
-            />
-            {errors.note && (
-              <span className="field-error">
-                <i className="bi bi-exclamation-circle"></i> {errors.note}
-              </span>
-            )}
+            <input type="text" name="note" value={formData.note} onChange={handleChange} placeholder="e.g., Lunch at restaurant" className={`input ${errors.note ? 'input-error' : ''}`} />
+            {errors.note && <span className="field-error"><i className="bi bi-exclamation-circle"></i> {errors.note}</span>}
           </div>
 
-          {/* Actions */}
+          {/* Recurring toggle — hidden when editing existing transaction */}
+          {!editingTransaction && (
+            <div className="form-group">
+              <button type="button" className={`recurring-toggle ${formData.recurring ? 'active' : ''}`} onClick={handleRecurringToggle}>
+                <span className="recurring-toggle__icon">
+                  <i className={`bi ${formData.recurring ? 'bi-check-circle-fill' : 'bi-arrow-repeat'}`}></i>
+                </span>
+                <span className="recurring-toggle__text">
+                  <strong>Repeat monthly</strong>
+                  <span>
+                    {formData.recurring && selectedDay
+                      ? `Will auto-generate on day ${selectedDay} of every month`
+                      : 'Automatically add this transaction every month'}
+                  </span>
+                </span>
+                <span className={`recurring-toggle__badge ${formData.recurring ? 'on' : 'off'}`}>
+                  {formData.recurring ? 'ON' : 'OFF'}
+                </span>
+              </button>
+            </div>
+          )}
+
           <div className="form-actions">
-            <button type="button" onClick={onClose} className="btn-cancel">
-              Cancel
-            </button>
-            <button type="submit" className="btn-submit">
-              {editingTransaction ? 'Update' : 'Add'} Transaction
-            </button>
+            <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+            <button type="submit" className="btn-submit">{editingTransaction ? 'Update' : 'Add'} Transaction</button>
           </div>
 
         </form>
