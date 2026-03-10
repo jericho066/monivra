@@ -8,6 +8,7 @@ const TransactionForm = ({
   onSubmit,
   onClose,
   categories,
+  wallets,
 }) => {
   const [errors, setErrors] = useState({});
 
@@ -40,15 +41,17 @@ const TransactionForm = ({
       newErrors.amount = 'Amount seems too large. Please double-check.';
     }
 
+    if (!formData.walletId) {
+      newErrors.walletId = 'Please select a wallet.';
+    }
+
     if (!formData.date) {
       newErrors.date = 'Please select a date.';
     } else {
       const selected = new Date(formData.date);
       const today = new Date();
       today.setHours(23, 59, 59, 999);
-      if (selected > today) {
-        newErrors.date = 'Date cannot be in the future.';
-      }
+      if (selected > today) newErrors.date = 'Date cannot be in the future.';
     }
 
     if (formData.note && formData.note.length > 100) {
@@ -84,6 +87,7 @@ const TransactionForm = ({
 
         <form onSubmit={handleSubmit} noValidate>
 
+          {/* Type */}
           <div className="form-group">
             <label className="label">Type</label>
             <div className="type-toggle">
@@ -92,25 +96,44 @@ const TransactionForm = ({
             </div>
           </div>
 
+          {/* Amount */}
           <div className="form-group">
             <label className="label">Amount (₱)</label>
             <input type="number" name="amount" value={formData.amount} onChange={handleChange} placeholder="0.00" step="0.01" className={`input ${errors.amount ? 'input-error' : ''}`} autoFocus />
             {errors.amount && <span className="field-error"><i className="bi bi-exclamation-circle"></i> {errors.amount}</span>}
           </div>
 
-          <div className="form-group">
-            <label className="label">Category</label>
-            <select name="categoryId" value={formData.categoryId} onChange={handleChange} className="select">
-              {filteredCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-            </select>
+          {/* Wallet + Category side by side */}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="label">Wallet</label>
+              <select name="walletId" value={formData.walletId} onChange={handleChange} className={`select ${errors.walletId ? 'input-error' : ''}`}>
+                <option value="">Select wallet…</option>
+                {wallets.map(w => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+              {errors.walletId && <span className="field-error"><i className="bi bi-exclamation-circle"></i> {errors.walletId}</span>}
+            </div>
+
+            <div className="form-group">
+              <label className="label">Category</label>
+              <select name="categoryId" value={formData.categoryId} onChange={handleChange} className="select">
+                {filteredCategories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
+          {/* Date */}
           <div className="form-group">
             <label className="label">Date</label>
             <input type="date" name="date" value={formData.date} onChange={handleChange} className={`input ${errors.date ? 'input-error' : ''}`} />
             {errors.date && <span className="field-error"><i className="bi bi-exclamation-circle"></i> {errors.date}</span>}
           </div>
 
+          {/* Note */}
           <div className="form-group">
             <label className="label">
               Note (optional)
@@ -122,7 +145,7 @@ const TransactionForm = ({
             {errors.note && <span className="field-error"><i className="bi bi-exclamation-circle"></i> {errors.note}</span>}
           </div>
 
-          {/* Recurring toggle — hidden when editing existing transaction */}
+          {/* Recurring toggle — hidden when editing */}
           {!editingTransaction && (
             <div className="form-group">
               <button type="button" className={`recurring-toggle ${formData.recurring ? 'active' : ''}`} onClick={handleRecurringToggle}>

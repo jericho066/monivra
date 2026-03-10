@@ -1,6 +1,6 @@
 import { formatCurrency, formatDate } from '../utils/helpers';
 
-const TransactionItem = ({ transaction, category, onEdit, onDelete }) => (
+const TransactionItem = ({ transaction, category, wallet, onEdit, onDelete }) => (
   <div className="transaction-item">
     <div className="transaction-icon" style={{ backgroundColor: category.color }}>
       <i className={`bi ${category.icon}`} aria-hidden="true"></i>
@@ -9,7 +9,14 @@ const TransactionItem = ({ transaction, category, onEdit, onDelete }) => (
     <div className="transaction-details">
       <div className="transaction-category">{category.name}</div>
       <div className="transaction-note">{transaction.note || 'No note'}</div>
-      <div className="transaction-date">{formatDate(transaction.date)}</div>
+      <div className="transaction-date">
+        {formatDate(transaction.date)}
+        {wallet && (
+          <span className="transaction-wallet-tag" style={{ borderColor: wallet.color, color: wallet.color }}>
+            <i className={`bi ${wallet.icon}`}></i> {wallet.name}
+          </span>
+        )}
+      </div>
     </div>
 
     <div className="transaction-right">
@@ -30,4 +37,3 @@ const TransactionItem = ({ transaction, category, onEdit, onDelete }) => (
 );
 
 export default TransactionItem;
-

@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
-
 import { DEFAULT_CATEGORIES } from './constants/categories';
 import { getStoredData, saveData, getDefaultCategory, getMonthlyTrend, triggerDownload } from './utils/helpers';
-
 import Header from './components/Header';
 import UndoToast from './components/UndoToast';
 import SummaryCards from './components/SummaryCards';
@@ -14,8 +12,10 @@ import TransactionForm from './components/TransactionForm';
 import BudgetGoals from './components/BudgetGoals';
 import RecurringList from './components/RecurringList';
 import { applyRecurringTransactions } from './utils/helpers';
+import { DEFAULT_WALLETS } from './constants/wallets';
+import WalletBar from './components/WalletBar';
 
-const blankForm = (categories, type = 'expense') => ({
+const blankForm = (categories, wallets, type = 'expense') => ({
   amount: '',
   type,
   categoryId: getDefaultCategory(type, categories),
@@ -30,7 +30,7 @@ function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [formData, setFormData] = useState(() => blankForm(DEFAULT_CATEGORIES));
+  const [formData, setFormData] = useState(() => blankForm(DEFAULT_CATEGORIES, DEFAULT_WALLETS));
   const [undoTransaction, setUndoTransaction] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -39,6 +39,8 @@ function App() {
   const [recurringTemplates, setRecurringTemplates] = useState(
     () => getStoredData('recurringTemplates', [])
   );
+  const [wallets, setWallets] = useState(() => getStoredData('wallets', DEFAULT_WALLETS));
+  const [selectedWallet, setSelectedWallet] = useState('all');
 
   useEffect(() => {
     saveData('transactions', transactions);
@@ -72,10 +74,17 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    saveData('wallets', wallets);
+  }, [wallets]);
+
 
   const getCategoryInfo = (categoryId) =>
     categories.find(c => c.id === categoryId) ||
     { name: 'Unknown', color: '#999', icon: 'bi-question-circle' };
+
+  const getWalletInfo = (walletId) =>
+    wallets.find(w => w.id === walletId) || null;
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
@@ -97,7 +106,8 @@ function App() {
       return matchesSearch && matchesCategory && matchesType;
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions, currentDate, searchQuery, selectedCategory, selectedType]);
+  }, [transactions, currentDate, searchQuery, selectedCategory, selectedType, selectedWallet]);
+
 
   const summary = useMemo(() => {
     const result = filteredTransactions.reduce(
@@ -110,6 +120,7 @@ function App() {
     );
     result.balance = result.income - result.expenses;
     return result;
+
   }, [filteredTransactions]);
 
 
@@ -128,6 +139,27 @@ function App() {
   }, [filteredTransactions, categories]);
 
   const monthlyTrendData = useMemo(() => getMonthlyTrend(transactions), [transactions]);
+
+  const walletBalances = useMemo(() => {
+    return wallets.reduce((acc, wallet) => {
+      const walletTx = transactions.filter(t => {
+        const d = new Date(t.date);
+        return (
+          t.walletId === wallet.id &&
+          d.getMonth() === currentDate.getMonth() &&
+          d.getFullYear() === currentDate.getFullYear()
+        );
+      });
+      const income   = walletTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const expenses = walletTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      acc[wallet.id] = {
+        balance: income - expenses,
+        txCount: walletTx.length,
+      };
+      return acc;
+    }, {});
+  }, [wallets, transactions, currentDate]);
+
 
   const spentByCategory = useMemo(() => {
     return categories.reduce((acc, cat) => {
@@ -150,21 +182,23 @@ function App() {
 
   const openAddForm = () => {
     setEditingTransaction(null);
-    setFormData(blankForm(categories, 'expense'));
+    setFormData(blankForm(categories, wallets, 'expense'));
     setShowForm(true);
   };
 
   const openEditForm = (transaction) => {
     setEditingTransaction(transaction);
     setFormData({
-      amount:     transaction.amount,
-      type:       transaction.type,
+      amount: transaction.amount,
+      type: transaction.type,
       categoryId: transaction.categoryId,
-      date:       transaction.date,
-      note:       transaction.note,
+      date: transaction.date,
+      note: transaction.note,
+      recurring: false,
     });
     setShowForm(true);
   };
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -174,6 +208,7 @@ function App() {
       amount: parseFloat(formData.amount),
       type: formData.type,
       categoryId: formData.categoryId,
+      walletId: formData.walletId,
       date: formData.date,
       note: formData.note,
       createdAt: new Date().toISOString(),
@@ -228,6 +263,19 @@ function App() {
     setSearchQuery('');
     setSelectedCategory('all');
     setSelectedType('all');
+  };
+
+
+  const handleAddWallet = (data) => {
+    setWallets(prev => [...prev, { id: crypto.randomUUID(), ...data }]);
+  };
+
+  const handleEditWallet = (updated) => {
+    setWallets(prev => prev.map(w => w.id === updated.id ? updated : w));
+  };
+
+  const handleDeleteWallet = (id) => {
+    setWallets(prev => prev.filter(w => w.id !== id));
   };
 
 
@@ -440,6 +488,16 @@ function App() {
 
       <SummaryCards summary={summary} />
 
+      <WalletBar
+        wallets={wallets}
+        selectedWallet={selectedWallet}
+        onSelectWallet={setSelectedWallet}
+        walletBalances={walletBalances}
+        onAddWallet={handleAddWallet}
+        onEditWallet={handleEditWallet}
+        onDeleteWallet={handleDeleteWallet}
+      />
+
       <BudgetGoals
         categories={categories}
         budgets={budgets}
@@ -477,6 +535,7 @@ function App() {
       <TransactionList
         transactions={filteredTransactions}
         getCategoryInfo={getCategoryInfo}
+        getWalletInfo={getWalletInfo}
         onEdit={openEditForm}
         onDelete={handleDelete}
         hasActiveFilters={hasActiveFilters}
@@ -490,6 +549,7 @@ function App() {
           onSubmit={handleSubmit}
           onClose={() => setShowForm(false)}
           categories={categories}
+          wallets={wallets}
         />
       )}
     </div>

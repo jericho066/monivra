@@ -32,11 +32,7 @@ const FilterSection = ({
         <div className="filter-panel">
           <div className="filter-group">
             <label className="filter-label">Type</label>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="filter-select"
-            >
+            <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="filter-select">
               <option value="all">All Types</option>
               <option value="expense">Expenses Only</option>
               <option value="income">Income Only</option>
@@ -45,11 +41,7 @@ const FilterSection = ({
 
           <div className="filter-group">
             <label className="filter-label">Category</label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="filter-select"
-            >
+            <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="filter-select">
               <option value="all">All Categories</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -58,9 +50,7 @@ const FilterSection = ({
           </div>
 
           {hasActiveFilters && (
-            <button onClick={onClearFilters} className="clear-btn">
-              Clear Filters
-            </button>
+            <button onClick={onClearFilters} className="clear-btn">Clear Filters</button>
           )}
         </div>
       )}
@@ -69,4 +59,5 @@ const FilterSection = ({
 };
 
 export default FilterSection;
+
 

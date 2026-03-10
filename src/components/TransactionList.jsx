@@ -16,7 +16,14 @@ const EmptyState = ({ hasActiveFilters }) => (
   </div>
 );
 
-const TransactionList = ({ transactions, getCategoryInfo, onEdit, onDelete, hasActiveFilters }) => (
+const TransactionList = ({
+  transactions,
+  getCategoryInfo,
+  getWalletInfo,
+  onEdit,
+  onDelete,
+  hasActiveFilters,
+}) => (
   <div className="transactions">
     <div className="transaction-header">
       <h2 className="section-title">Transactions ({transactions.length})</h2>
@@ -31,6 +38,7 @@ const TransactionList = ({ transactions, getCategoryInfo, onEdit, onDelete, hasA
             key={transaction.id}
             transaction={transaction}
             category={getCategoryInfo(transaction.categoryId)}
+            wallet={getWalletInfo(transaction.walletId)}
             onEdit={onEdit}
             onDelete={onDelete}
           />
@@ -41,4 +49,3 @@ const TransactionList = ({ transactions, getCategoryInfo, onEdit, onDelete, hasA
 );
 
 export default TransactionList;
-
