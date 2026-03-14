@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import './App.css';
 import { DEFAULT_CATEGORIES } from './constants/categories';
-import { getStoredData, saveData, getDefaultCategory, getMonthlyTrend, triggerDownload } from './utils/helpers';
+import { getStoredData, saveData, getDefaultCategory, getMonthlyTrend, triggerDownload, applyRecurringTransactions } from './utils/helpers';
 import Header from './components/Header';
 import UndoToast from './components/UndoToast';
 import SummaryCards from './components/SummaryCards';
@@ -11,14 +11,15 @@ import TransactionList from './components/TransactionList';
 import TransactionForm from './components/TransactionForm';
 import BudgetGoals from './components/BudgetGoals';
 import RecurringList from './components/RecurringList';
-import { applyRecurringTransactions } from './utils/helpers';
 import { DEFAULT_WALLETS } from './constants/wallets';
 import WalletBar from './components/WalletBar';
+import Insights from './components/Insights';
 
 const blankForm = (categories, wallets, type = 'expense') => ({
   amount: '',
   type,
   categoryId: getDefaultCategory(type, categories),
+  walletId: wallets?.[0]?.id || '',
   date: new Date().toISOString().split('T')[0],
   note: '',
   recurring: false,
@@ -102,9 +103,11 @@ function App() {
 
       const matchesCategory = selectedCategory === 'all' || t.categoryId === selectedCategory;
       const matchesType     = selectedType === 'all' || t.type === selectedType;
+      const matchesWallet   = selectedWallet === 'all' || t.walletId === selectedWallet;
 
-      return matchesSearch && matchesCategory && matchesType;
+      return matchesSearch && matchesCategory && matchesType && matchesWallet;
     });
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactions, currentDate, searchQuery, selectedCategory, selectedType, selectedWallet]);
 
@@ -137,6 +140,47 @@ function App() {
       .filter(cat => cat.value > 0)
       .sort((a, b) => b.value - a.value);
   }, [filteredTransactions, categories]);
+
+
+  const lastMonthSummary = useMemo(() => {
+    const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const lastMonthTx = transactions.filter(t => {
+      const d = new Date(t.date);
+      return (
+        d.getMonth() === lastMonth.getMonth() &&
+        d.getFullYear() === lastMonth.getFullYear()
+      );
+    });
+
+    const income   = lastMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const expenses = lastMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    return { income, expenses, balance: income - expenses };
+
+  }, [transactions, currentDate]);
+
+  const lastMonthCategoryData = useMemo(() => {
+    const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const lastMonthTx = transactions.filter(t => {
+      const d = new Date(t.date);
+      return (
+        d.getMonth() === lastMonth.getMonth() &&
+        d.getFullYear() === lastMonth.getFullYear()
+      );
+    });
+
+    return categories
+      .map(cat => ({
+        name:  cat.name,
+        value: lastMonthTx
+          .filter(t => t.categoryId === cat.id && t.type === 'expense')
+          .reduce((s, t) => s + t.amount, 0),
+        color: cat.color,
+        icon:  cat.icon,
+      }))
+      .filter(cat => cat.value > 0);
+
+  }, [transactions, currentDate, categories]);
+
 
   const monthlyTrendData = useMemo(() => getMonthlyTrend(transactions), [transactions]);
 
@@ -192,6 +236,7 @@ function App() {
       amount: transaction.amount,
       type: transaction.type,
       categoryId: transaction.categoryId,
+      walletId:   transaction.walletId || wallets[0]?.id || '',
       date: transaction.date,
       note: transaction.note,
       recurring: false,
@@ -518,6 +563,15 @@ function App() {
         categoryData={categoryData}
         monthlyTrendData={monthlyTrendData}
         hasTransactions={transactions.length > 0}
+      />
+
+      <Insights
+        summary={summary}
+        lastMonthSummary={lastMonthSummary}
+        categoryData={categoryData}
+        lastMonthCategoryData={lastMonthCategoryData}
+        transactions={transactions}
+        currentDate={currentDate}
       />
 
       <FilterSection
